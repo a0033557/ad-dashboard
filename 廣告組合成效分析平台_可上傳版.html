@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>廣告組合成效分析平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#11151A;
+  --panel:#1A2129;
+  --panel-2:#212A33;
+  --border:#2A3440;
+  --text:#E8ECEF;
+  --text-dim:#8B97A3;
+  --text-faint:#5A6573;
+  --mint:#6FE3C4;
+  --mint-dim:#3A6F62;
+  --coral:#FF8A5C;
+  --coral-dim:#7A4632;
+  --amber:#F0C76B;
+  --amber-dim:#6B5A2E;
+  --radius:8px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',-apple-system,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px;}
+
+/* ---------- upload screen ---------- */
+#uploadScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.upload-card{max-width:560px;width:100%;text-align:center;}
+.upload-card .eyebrow{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+.upload-card h1{font-size:24px;font-weight:600;margin:0 0 10px;letter-spacing:-0.01em;}
+.upload-card .desc{color:var(--text-dim);font-size:14px;margin:0 0 32px;line-height:1.7;}
+.dropzone{
+  border:1.5px dashed var(--border);
+  border-radius:12px;
+  padding:48px 24px;
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+  background:var(--panel);
+}
+.dropzone:hover, .dropzone.dragover{border-color:var(--mint-dim);background:var(--panel-2);}
+.dropzone .icon{font-size:32px;color:var(--text-faint);margin-bottom:14px;}
+.dropzone .main-text{font-size:15px;font-weight:500;margin-bottom:6px;}
+.dropzone .sub-text{font-size:12.5px;color:var(--text-faint);}
+.dropzone input{display:none;}
+.upload-meta{margin-top:20px;font-size:12px;color:var(--text-faint);line-height:1.8;text-align:left;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 18px;}
+.upload-meta b{color:var(--text-dim);font-weight:500;}
+.error-box{
+  margin-top:18px;
+  background:rgba(255,138,92,0.08);
+  border:1px solid var(--coral-dim);
+  border-radius:8px;
+  padding:14px 16px;
+  color:var(--coral);
+  font-size:13px;
+  text-align:left;
+  display:none;
+}
+.loading-box{
+  margin-top:18px;
+  color:var(--text-dim);
+  font-size:13px;
+  display:none;
+}
+.sample-link{color:var(--mint);text-decoration:none;cursor:pointer;border-bottom:1px solid var(--mint-dim);}
+.sample-link:hover{border-color:var(--mint);}
+
+/* ---------- dashboard screen ---------- */
+#dashboardScreen{display:none;}
+
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:20px;gap:16px;flex-wrap:wrap;}
+.header h1{font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-0.01em;}
+.header .sub{color:var(--text-dim);font-size:13px;margin:0;}
+.header .period{text-align:right;}
+.header .period .label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;}
+.header .period .val{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--mint);}
+.header-right{display:flex;align-items:center;gap:14px;}
+.new-file-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+.new-file-btn:hover{border-color:var(--text-faint);color:var(--text);}
+
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;}
+.kpi{background:var(--panel);padding:16px 18px;}
+.kpi.lead{background:var(--panel-2);}
+.kpi .label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;}
+.kpi .value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--text);}
+.kpi .value.mint{color:var(--mint);}
+.kpi .value.coral{color:var(--coral);}
+.kpi .value.amber{color:var(--amber);}
+
+.filters{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.filters .group{display:flex;flex-direction:column;gap:4px;}
+.filters label{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.04em;}
+.filters select, .filters input[type=text]{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  padding:6px 10px;
+  border-radius:6px;
+  outline:none;
+  min-width:140px;
+}
+.filters select:focus, .filters input:focus{border-color:var(--mint-dim);}
+.filters input[type=text]{min-width:200px;}
+.filters .count{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);white-space:nowrap;}
+.filters .count b{color:var(--mint);}
+.reset-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;}
+.reset-btn:hover{border-color:var(--text-faint);color:var(--text);}
+
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.tab{padding:9px 16px;font-size:13px;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;font-weight:500;}
+.tab.active{color:var(--mint);border-bottom-color:var(--mint);}
+.tab:hover:not(.active){color:var(--text);}
+.view{display:none;}
+.view.active{display:block;}
+
+.table-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{
+  position:sticky;top:0;
+  background:var(--panel-2);
+  text-align:left;
+  padding:10px 12px;
+  font-weight:500;
+  color:var(--text-dim);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  white-space:nowrap;
+  user-select:none;
+}
+thead th:hover{color:var(--text);}
+thead th.sorted{color:var(--mint);}
+thead th .arrow{font-size:9px;margin-left:3px;opacity:0.7;}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
+tbody td.name-cell{font-family:'Inter',sans-serif;white-space:normal;max-width:280px;}
+tbody tr:hover{background:var(--panel-2);}
+.name-main{font-size:13px;color:var(--text);font-weight:500;}
+.name-sub{font-size:11px;color:var(--text-faint);margin-top:1px;}
+.status-pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-family:'Inter',sans-serif;font-weight:500;letter-spacing:0.02em;}
+.status-active{background:rgba(111,227,196,0.15);color:var(--mint);}
+.status-inactive{background:rgba(90,101,115,0.2);color:var(--text-faint);}
+.status-scheduled{background:rgba(240,199,107,0.15);color:var(--amber);}
+.bar-cell{position:relative;min-width:110px;}
+.bar-track{position:relative;height:18px;display:flex;align-items:center;}
+.bar-fill{height:6px;border-radius:3px;background:var(--mint-dim);position:relative;}
+.bar-fill.coral{background:var(--coral-dim);}
+.bar-fill.amber{background:var(--amber-dim);}
+.bar-num{font-size:12px;color:var(--text);}
+.no-data{color:var(--text-faint);}
+.num-r{text-align:right;}
+
+.compare-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-top:16px;}
+.compare-panel h3{font-size:13px;color:var(--text-dim);margin:0 0 14px;text-transform:uppercase;letter-spacing:0.04em;font-weight:500;}
+.compare-empty{color:var(--text-faint);font-size:13px;padding:20px 0;text-align:center;}
+
+.campaign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.campaign-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;cursor:pointer;transition:border-color .15s;}
+.campaign-card:hover{border-color:var(--mint-dim);}
+.campaign-card.selected{border-color:var(--mint);background:var(--panel-2);}
+.campaign-card .cname{font-size:14px;font-weight:600;margin-bottom:2px;}
+.campaign-card .csub{font-size:11px;color:var(--text-faint);margin-bottom:14px;}
+.campaign-card .crow{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-top:1px solid var(--border);}
+.campaign-card .crow:first-of-type{border-top:none;}
+.campaign-card .clabel{font-size:11px;color:var(--text-dim);}
+.campaign-card .cval{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;}
+.cval.mint{color:var(--mint);}
+.cval.coral{color:var(--coral);}
+
+.trend-chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.trend-controls{display:flex;gap:8px;margin-bottom:14px;}
+.metric-btn{background:var(--panel-2);border:1px solid var(--border);color:var(--text-dim);font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;}
+.metric-btn.active{border-color:var(--mint);color:var(--mint);}
+.section-label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;}
+
+.chk{width:14px;height:14px;accent-color:var(--mint);cursor:pointer;}
+
+::-webkit-scrollbar{height:8px;width:8px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+@media (max-width:900px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .wrap{padding:18px;}
+}
+</style>
+</head>
+<body>
+
+<div id="uploadScreen">
+  <div class="upload-card">
+    <div class="eyebrow">廣告組合成效分析平台</div>
+    <h1>上傳廣告組合報表開始分析</h1>
+    <p class="desc">上傳 Meta 廣告管理工具匯出的「廣告組合」層級報表（.xlsx），系統會自動解析並產生 CPA、每日留存組數等成效比較分析。檔案僅在你的瀏覽器中處理，不會上傳到任何伺服器。</p>
+
+    <div class="dropzone" id="dropzone">
+      <div class="icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="main-text">點擊選擇檔案，或將 Excel 檔拖曳到這裡</div>
+      <div class="sub-text">支援 .xlsx 格式</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+
+    <div class="loading-box" id="loadingBox">正在解析檔案...</div>
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="upload-meta">
+      <b>檔案格式需求：</b>需包含「廣告組合名稱」「花費金額 (TWD)」等 Meta 廣告管理工具標準匯出欄位。建議匯出層級：廣告組合 (Ad Set)，並包含購買次數、每次購買成本等轉換欄位。
+    </div>
+  </div>
+</div>
+
+<div id="dashboardScreen">
+  <div class="wrap">
+
+    <div class="header">
+      <div>
+        <h1>廣告組合成效比較平台</h1>
+        <p class="sub" id="headerSub">Meta 廣告組合分析 · 聚焦 CPA 與每日留存組數</p>
+      </div>
+      <div class="header-right">
+        <div class="period">
+          <div class="label">分析報告期間</div>
+          <div class="val" id="periodVal">—</div>
+        </div>
+        <button class="new-file-btn" id="newFileBtn">上傳新檔案</button>
+      </div>
+    </div>
+
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-view="table">廣告組合明細</div>
+      <div class="tab" data-view="campaign">分類比較</div>
+      <div class="tab" data-view="trend">CPA 與留存組數趨勢</div>
+    </div>
+
+    <div class="view active" id="view-table">
+      <div class="filters">
+        <div class="group">
+          <label id="campaignFilterLabel">分類 / 組別</label>
+          <select id="f-campaign"></select>
+        </div>
+        <div class="group">
+          <label>投遞狀態</label>
+          <select id="f-status">
+            <option value="">全部</option>
+            <option value="active">active</option>
+            <option value="inactive">inactive</option>
+            <option value="scheduled">scheduled</option>
+          </select>
+        </div>
+        <div class="group">
+          <label>搜尋興趣 / 名稱</label>
+          <input type="text" id="f-search" placeholder="輸入關鍵字搜尋...">
+        </div>
+        <div class="group">
+          <label>僅顯示有購買轉換</label>
+          <select id="f-haspurchase">
+            <option value="">全部</option>
+            <option value="yes">有購買</option>
+            <option value="no">無購買</option>
+          </select>
+        </div>
+        <button class="reset-btn" id="resetBtn">清除篩選</button>
+        <div class="count">顯示 <b id="countShown">0</b> / <span id="countTotal">0</span> 筆</div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="tbl-scroll">
+          <table id="dataTable">
+            <thead><tr id="tableHead"></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="compare-panel">
+        <h3>已選取比較 (<span id="selCount">0</span>)</h3>
+        <div id="compareContent" class="compare-empty">在表格中勾選 2 筆以上的廣告組合即可並排比較</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-campaign">
+      <div class="filters" style="margin-bottom:14px;">
+        <div class="group">
+          <label>排序依據</label>
+          <select id="camp-sort">
+            <option value="cpa_asc">CPA（低到高）</option>
+            <option value="spend">花費</option>
+            <option value="purchases">購買次數</option>
+            <option value="roas">ROAS</option>
+          </select>
+        </div>
+        <div class="count">點選卡片可加入下方比較 · 已選 <b id="campSelCount">0</b></div>
+      </div>
+      <div class="campaign-grid" id="campaignGrid"></div>
+      <div class="compare-panel" id="campComparePanel" style="margin-top:18px;">
+        <h3>分類比較</h3>
+        <div id="campCompareContent" class="compare-empty">點選上方卡片以比較成效</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-trend">
+      <div class="trend-chart-wrap">
+        <div class="section-label">每日留存組數（每日有花費的廣告組合數） vs 每日 CPA</div>
+        <div style="position:relative;height:340px;">
+          <canvas id="retentionChart" role="img" aria-label="每日留存組數與CPA雙軸趨勢圖"></canvas>
+        </div>
+      </div>
+      <div class="trend-chart-wrap">
+        <div class="trend-controls" id="trendMetricBtns"></div>
+        <div style="position:relative;height:300px;">
+          <canvas id="trendChart" role="img" aria-label="廣告組合建立日期分布的成效趨勢圖"></canvas>
+        </div>
+      </div>
+      <div class="trend-chart-wrap">
+        <div class="section-label" id="pieLabel">各分類花費佔比</div>
+        <div style="position:relative;height:300px;">
+          <canvas id="campaignPie" role="img" aria-label="各分類花費佔比圓餅圖"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// =========================================================================
+// PART 1: FILE UPLOAD + EXCEL PARSING PIPELINE
+// =========================================================================
+
+const COLUMN_MAP = {
+  '廣告組合名稱': 'name',
+  '廣告組合投遞': 'delivery_status',
+  '廣告組合預算': 'budget',
+  '廣告組合預算類型': 'budget_type',
+  '花費金額 (TWD)': 'spend',
+  '觸及人數': 'reach',
+  '曝光次數': 'impressions',
+  '頻率': 'frequency',
+  'CTR（全部）': 'ctr',
+  'CPM（每千次廣告曝光成本） (TWD)': 'cpm',
+  'CPC（全部） (TWD)': 'cpc',
+  '連結點擊次數': 'link_clicks',
+  '不重複連結點擊人數': 'unique_link_clicks',
+  '內容瀏覽次數': 'content_views',
+  '加到購物車次數': 'add_to_cart',
+  '開始結帳次數': 'checkouts',
+  '購買次數': 'purchases',
+  '每次購買成本 (TWD)': 'cpa',
+  '購買 ROAS（廣告投資報酬率）': 'roas',
+  '建立日期': 'created_date',
+  '最後編輯日期': 'last_edited_date',
+  '貼文互動次數': 'post_engagement',
+  'ThruPlay 次數': 'thruplay',
+  '影片播放 3 秒以上的次數': 'video_3s_views',
+};
+// fields that may appear under different names depending on report config
+const REVENUE_FIELD_CANDIDATES = ['購買轉換值', '平均購買轉換值'];
+const REQUIRED_COLUMNS = ['廣告組合名稱', '花費金額 (TWD)'];
+
+function excelDateToStr(v){
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') {
+    // Excel serial date
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return d.toISOString().slice(0,10);
+  }
+  // already a string/date
+  const d = new Date(v);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return String(v);
+}
+
+function parseAdSetName(rawName){
+  const n = String(rawName);
+  let parts = n.split(/\s*-\s*/).map(p=>p.trim()).filter(p=>p.length>0);
+  let dateTag = null;
+  if (parts.length && /^\d{4}$/.test(parts[parts.length-1])) {
+    dateTag = parts[parts.length-1];
+    parts = parts.slice(0, -1);
+  }
+  // some exports double-stamp a trailing 4-digit date artifact (e.g. duplicate
+  // re-saves of the same creative) - drop a second trailing 4-digit token too,
+  // as long as there's still a group token left after removing it
+  if (parts.length > 3 && /^\d{4}$/.test(parts[parts.length-1])) {
+    parts = parts.slice(0, -1);
+  }
+  const deliveryType = parts[0] || null;
+  const interest = parts[1] || null;
+  let group = null;
+  const extra = [];
+  for (let i=2;i<parts.length;i++){
+    const p = parts[i];
+    if (/^KOL/i.test(p) || p === 'B組' || p === 'A組') {
+      group = p;
+    } else {
+      extra.push(p);
+    }
+  }
+  if (group == null && extra.length) group = extra.join(' - ');
+  if (group == null) group = '未分類';
+  return { deliveryType, interest: interest || '未指定', group, dateTag };
+}
+
+function numOrNull(v){
+  if (v == null || v === '' || v === '-') return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+function numOrZero(v){
+  const n = numOrNull(v);
+  return n == null ? 0 : n;
+}
+
+function validateColumns(headerRow){
+  const missing = REQUIRED_COLUMNS.filter(c => !headerRow.includes(c));
+  return missing;
+}
+
+function processWorkbook(workbook){
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: true });
+  if (!rows.length) throw new Error('EMPTY_SHEET');
+
+  const headerRow = Object.keys(rows[0]);
+  const missing = validateColumns(headerRow);
+  if (missing.length) {
+    const err = new Error('MISSING_COLUMNS');
+    err.missing = missing;
+    throw err;
+  }
+
+  // determine revenue field present
+  let revenueField = null, revenueMode = null;
+  if (headerRow.includes('購買轉換值')) { revenueField = '購買轉換值'; revenueMode = 'total'; }
+  else if (headerRow.includes('平均購買轉換值')) { revenueField = '平均購買轉換值'; revenueMode = 'avg'; }
+
+  const cleaned = [];
+  for (const row of rows) {
+    const spend = numOrZero(row['花費金額 (TWD)']);
+    if (!(spend > 0)) continue; // only keep rows with actual spend
+
+    const rec = { name: row['廣告組合名稱'] };
+    for (const [src, dst] of Object.entries(COLUMN_MAP)) {
+      if (dst === 'name') continue;
+      if (!(src in row)) continue;
+      rec[dst] = row[src];
+    }
+
+    // parse name into campaign group / interest
+    const parsed = parseAdSetName(row['廣告組合名稱']);
+    rec.campaign = parsed.group;
+    rec.interest = parsed.interest;
+
+    // numeric coercion
+    rec.spend = spend;
+    rec.reach = numOrZero(rec.reach);
+    rec.impressions = numOrZero(rec.impressions);
+    rec.link_clicks = numOrZero(rec.link_clicks);
+    rec.unique_link_clicks = numOrZero(rec.unique_link_clicks);
+    rec.content_views = numOrZero(rec.content_views);
+    rec.add_to_cart = numOrZero(rec.add_to_cart);
+    rec.checkouts = numOrZero(rec.checkouts);
+    rec.purchases = numOrZero(rec.purchases);
+    rec.post_engagement = numOrZero(rec.post_engagement);
+    rec.thruplay = numOrZero(rec.thruplay);
+    rec.video_3s_views = numOrZero(rec.video_3s_views);
+    rec.frequency = numOrNull(rec.frequency);
+    rec.ctr = numOrZero(rec.ctr);
+    rec.cpm = numOrZero(rec.cpm);
+    rec.cpc = numOrNull(rec.cpc);
+    rec.cpa = numOrNull(rec.cpa);
+    rec.roas = numOrNull(rec.roas);
+    rec.delivery_status = rec.delivery_status || 'unknown';
+
+    // revenue / purchase_value standardization
+    let purchaseValue = null;
+    if (revenueMode === 'total') {
+      purchaseValue = numOrNull(row[revenueField]);
+    } else if (revenueMode === 'avg') {
+      const avgVal = numOrNull(row[revenueField]);
+      purchaseValue = (avgVal != null && rec.purchases > 0) ? avgVal * rec.purchases : null;
+    }
+    if (purchaseValue == null && rec.roas != null && rec.spend > 0) {
+      purchaseValue = rec.spend * rec.roas;
+    }
+    rec.purchase_value = purchaseValue;
+    if (rec.roas == null && purchaseValue != null && rec.spend > 0) {
+      rec.roas = purchaseValue / rec.spend;
+    }
+    // if cpa missing but purchases>0, derive
+    if (rec.cpa == null && rec.purchases > 0) {
+      rec.cpa = rec.spend / rec.purchases;
+    }
+
+    rec.created_date = excelDateToStr(rec.created_date);
+    rec.last_edited_date = excelDateToStr(rec.last_edited_date);
+    rec.budget = numOrZero(rec.budget);
+    rec.budget_type = rec.budget_type || null;
+
+    cleaned.push(rec);
+  }
+
+  if (!cleaned.length) {
+    const err = new Error('NO_SPEND_ROWS');
+    throw err;
+  }
+
+  return cleaned;
+}
+
+function showError(msg){
+  const box = document.getElementById('errorBox');
+  box.innerHTML = msg;
+  box.style.display = 'block';
+}
+function hideError(){
+  document.getElementById('errorBox').style.display = 'none';
+}
+function setLoading(on){
+  document.getElementById('loadingBox').style.display = on ? 'block' : 'none';
+}
+
+function handleFile(file){
+  hideError();
+  if (!file) return;
+  const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+  if (!isExcel) {
+    showError('請上傳 .xlsx 或 .xls 格式的檔案。');
+    return;
+  }
+  setLoading(true);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+      const cleaned = processWorkbook(workbook);
+      setLoading(false);
+      launchDashboard(cleaned, file.name);
+    } catch (err) {
+      setLoading(false);
+      if (err.message === 'MISSING_COLUMNS') {
+        showError('檔案缺少必要欄位：<b>' + err.missing.join('、') + '</b><br>請確認上傳的是 Meta 廣告管理工具匯出的「廣告組合」層級報表。');
+      } else if (err.message === 'EMPTY_SHEET') {
+        showError('檔案內容是空的，請確認檔案是否正確匯出。');
+      } else if (err.message === 'NO_SPEND_ROWS') {
+        showError('檔案中找不到任何有花費金額的廣告組合，無法產生分析。');
+      } else {
+        showError('解析檔案時發生錯誤，請確認檔案格式是否正確。<br><span style="color:var(--text-faint);font-size:11.5px;">' + (err.message||'') + '</span>');
+      }
+      console.error(err);
+    }
+  };
+  reader.onerror = () => {
+    setLoading(false);
+    showError('讀取檔案時發生錯誤，請再試一次。');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setupUploadScreen(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  ['dragenter','dragover'].forEach(evt=>{
+    dropzone.addEventListener(evt, (e)=>{ e.preventDefault(); dropzone.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    dropzone.addEventListener(evt, (e)=>{ e.preventDefault(); dropzone.classList.remove('dragover'); });
+  });
+  dropzone.addEventListener('drop', (e)=>{
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  document.getElementById('newFileBtn').addEventListener('click', () => {
+    document.getElementById('dashboardScreen').style.display = 'none';
+    document.getElementById('uploadScreen').style.display = 'flex';
+    fileInput.value = '';
+    hideError();
+    resetDashboardState();
+  });
+}
+
+function launchDashboard(data, fileName){
+  document.getElementById('uploadScreen').style.display = 'none';
+  document.getElementById('dashboardScreen').style.display = 'block';
+  initDashboard(data, fileName);
+}
+
+// =========================================================================
+// PART 2: DASHBOARD RENDERING (operates on parsed DATA)
+// =========================================================================
+
+const fmtInt = n => Math.round(n).toLocaleString('en-US');
+const fmtMoney = n => n == null ? null : '$' + Math.round(n).toLocaleString('en-US');
+const fmtPct = n => n == null ? null : n.toFixed(2) + '%';
+const fmtX = n => n == null ? null : n.toFixed(2) + 'x';
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function statusPill(s){
+  const cls = s === 'active' ? 'status-active' : (s === 'scheduled' ? 'status-scheduled' : 'status-inactive');
+  return `<span class="status-pill ${cls}">${escapeHtml(s)}</span>`;
+}
+
+let DATA = [];
+let filtered = [];
+let sortKey = 'cpa';
+let sortDir = 1;
+let selected = new Set();
+let campSelected = new Set();
+let retentionChart, trendChart, pieChart;
+let currentTrendMetric = 'spend';
+const TREND_METRICS = [
+  {k:'spend', l:'花費'},
+  {k:'purchases', l:'購買次數'},
+  {k:'roas', l:'ROAS'},
+  {k:'ctr', l:'CTR'},
+  {k:'impressions', l:'曝光次數'},
+];
+
+function maxOf(key){
+  let m = 0;
+  for (const r of filtered) { const v = r[key]; if (v != null && v > m) m = v; }
+  return m || 1;
+}
+function minOfCpa(){
+  let vals = filtered.map(r=>r.cpa).filter(v=>v!=null);
+  return vals.length ? Math.min(...vals) : 0;
+}
+function maxOfCpa(){
+  let vals = filtered.map(r=>r.cpa).filter(v=>v!=null);
+  return vals.length ? Math.max(...vals) : 1;
+}
+
+const COLS = [
+  { key:'_chk', label:'', sortable:false, width:28 },
+  { key:'name', label:'廣告組合名稱', sortable:true, render:r=>`<div class="name-main">${escapeHtml(r.campaign)}</div><div class="name-sub">${escapeHtml(r.interest||'')}</div>` },
+  { key:'delivery_status', label:'狀態', sortable:true, render:r=>statusPill(r.delivery_status) },
+  { key:'cpa', label:'CPA 每次購買成本', sortable:true, type:'cpa-bar', fmt:fmtMoney },
+  { key:'purchases', label:'購買次數', sortable:true, type:'num', fmt:fmtInt },
+  { key:'spend', label:'花費 (TWD)', sortable:true, type:'bar', max:()=>maxOf('spend'), fmt:fmtInt },
+  { key:'reach', label:'觸及人數', sortable:true, type:'num', fmt:fmtInt },
+  { key:'impressions', label:'曝光次數', sortable:true, type:'num', fmt:fmtInt },
+  { key:'ctr', label:'CTR', sortable:true, type:'bar', max:()=>maxOf('ctr'), fmt:fmtPct },
+  { key:'cpm', label:'CPM', sortable:true, type:'num', fmt:fmtMoney },
+  { key:'link_clicks', label:'連結點擊', sortable:true, type:'num', fmt:fmtInt },
+  { key:'roas', label:'ROAS', sortable:true, type:'bar', max:()=>4, fmt:fmtX },
+  { key:'created_date', label:'建立日期', sortable:true, type:'plain' },
+];
+
+function uniqueCampaigns(){
+  return [...new Set(DATA.map(d=>d.campaign))].sort((a,b)=>String(a).localeCompare(String(b),'zh-Hant'));
+}
+
+function populateFilters(){
+  const sel = document.getElementById('f-campaign');
+  sel.innerHTML = '<option value="">全部分類</option>' + uniqueCampaigns().map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+}
+
+function applyFilters(){
+  const campaign = document.getElementById('f-campaign').value;
+  const status = document.getElementById('f-status').value;
+  const search = document.getElementById('f-search').value.trim().toLowerCase();
+  const hasPurchase = document.getElementById('f-haspurchase').value;
+
+  filtered = DATA.filter(r=>{
+    if (campaign && r.campaign !== campaign) return false;
+    if (status && r.delivery_status !== status) return false;
+    if (hasPurchase === 'yes' && !(r.purchases > 0)) return false;
+    if (hasPurchase === 'no' && r.purchases > 0) return false;
+    if (search) {
+      const hay = (String(r.name) + ' ' + (r.interest||'') + ' ' + r.campaign).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  sortData();
+  renderTable();
+  document.getElementById('countShown').textContent = filtered.length;
+  document.getElementById('countTotal').textContent = DATA.length;
+}
+
+function sortData(){
+  filtered.sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if (av == null) av = sortDir === 1 ? Infinity : -Infinity;
+    if (bv == null) bv = sortDir === 1 ? Infinity : -Infinity;
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv, 'zh-Hant');
+    return sortDir * (av - bv);
+  });
+}
+
+function renderTableHead(){
+  const head = document.getElementById('tableHead');
+  head.innerHTML = COLS.map(c=>{
+    if (c.key === '_chk') return `<th style="width:${c.width}px"></th>`;
+    const arrow = sortKey === c.key ? (sortDir === 1 ? '▲' : '▼') : '';
+    return `<th data-key="${c.key}" class="${sortKey===c.key?'sorted':''}">${c.label}<span class="arrow">${arrow}</span></th>`;
+  }).join('');
+  head.querySelectorAll('th[data-key]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = key === 'cpa' ? 1 : -1; }
+      sortData(); renderTable(); renderTableHead();
+    });
+  });
+}
+
+function renderTable(){
+  const body = document.getElementById('tableBody');
+  const rows = filtered.slice(0, 500);
+  const cpaMin = minOfCpa(), cpaMax = maxOfCpa();
+  body.innerHTML = rows.map((r)=>{
+    const cells = COLS.map(c=>{
+      if (c.key === '_chk') {
+        const checked = selected.has(r.name) ? 'checked' : '';
+        return `<td><input type="checkbox" class="chk" data-name="${escapeHtml(r.name)}" ${checked}></td>`;
+      }
+      if (c.key === 'name') return `<td class="name-cell">${c.render(r)}</td>`;
+      if (c.key === 'delivery_status') return `<td>${c.render(r)}</td>`;
+      if (c.key === 'created_date') return `<td>${r.created_date||'—'}</td>`;
+      const v = r[c.key];
+      if (c.type === 'cpa-bar') {
+        if (v == null) return `<td class="no-data">— 無購買</td>`;
+        const range = cpaMax - cpaMin || 1;
+        const pct = Math.max(8, 100 - ((v - cpaMin) / range) * 100);
+        const cls = v <= cpaMin * 1.3 ? '' : (v >= cpaMax * 0.75 ? 'coral' : 'amber');
+        return `<td class="bar-cell"><div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div><div class="bar-num">${c.fmt(v)}</div></td>`;
+      }
+      if (c.type === 'bar') {
+        if (v == null) return `<td class="no-data">—</td>`;
+        const max = c.max();
+        const pct = Math.min(100, (v / max) * 100);
+        return `<td class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div class="bar-num">${c.fmt(v)}</div></td>`;
+      }
+      if (c.type === 'num') {
+        return v == null ? `<td class="no-data num-r">—</td>` : `<td class="num-r">${c.fmt(v)}</td>`;
+      }
+      return `<td>${v ?? '—'}</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  body.querySelectorAll('.chk').forEach(chk=>{
+    chk.addEventListener('change', ()=>{
+      const name = chk.dataset.name;
+      if (chk.checked) selected.add(name); else selected.delete(name);
+      renderCompare();
+    });
+  });
+}
+
+function renderCompare(){
+  document.getElementById('selCount').textContent = selected.size;
+  const panel = document.getElementById('compareContent');
+  if (selected.size < 2) {
+    panel.className = 'compare-empty';
+    panel.innerHTML = '在表格中勾選 2 筆以上的廣告組合即可並排比較';
+    return;
+  }
+  panel.className = '';
+  const rows = DATA.filter(d=>selected.has(d.name));
+  const metrics = [
+    {k:'cpa', l:'CPA 每次購買成本', f:fmtMoney, lowerBetter:true},
+    {k:'purchases', l:'購買次數', f:fmtInt},
+    {k:'spend', l:'花費 (TWD)', f:fmtInt},
+    {k:'reach', l:'觸及人數', f:fmtInt},
+    {k:'impressions', l:'曝光次數', f:fmtInt},
+    {k:'ctr', l:'CTR', f:fmtPct},
+    {k:'cpm', l:'CPM', f:fmtMoney},
+    {k:'link_clicks', l:'連結點擊', f:fmtInt},
+    {k:'roas', l:'ROAS', f:fmtX},
+  ];
+  let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">';
+  html += '<thead><tr><th style="text-align:left;padding:8px 12px;color:var(--text-faint);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border);">指標</th>';
+  rows.forEach(r=>{
+    html += `<th style="text-align:right;padding:8px 12px;color:var(--text-dim);font-size:12px;border-bottom:1px solid var(--border);font-weight:500;max-width:160px;">${escapeHtml(r.campaign)}<br><span style="color:var(--text-faint);font-size:10.5px;font-weight:400;">${escapeHtml(r.interest||'')}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+  metrics.forEach(m=>{
+    const vals = rows.map(r=>r[m.k]);
+    const validVals = vals.filter(v=>v!=null);
+    if (!validVals.length) return;
+    const best = m.lowerBetter ? Math.min(...validVals) : Math.max(...validVals);
+    html += `<tr><td style="padding:7px 12px;color:var(--text-dim);border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;">${m.l}</td>`;
+    rows.forEach(r=>{
+      const v = r[m.k];
+      const isBest = v != null && v === best && validVals.length > 1;
+      html += `<td style="text-align:right;padding:7px 12px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;color:${isBest?'var(--mint)':'var(--text)'};">${v==null?'—':m.f(v)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  panel.innerHTML = html;
+}
+
+function renderKPIs(){
+  const totalSpend = DATA.reduce((s,r)=>s+r.spend,0);
+  const totalPurchases = DATA.reduce((s,r)=>s+(r.purchases||0),0);
+  const overallCpa = totalPurchases > 0 ? totalSpend / totalPurchases : null;
+  const totalImpressions = DATA.reduce((s,r)=>s+r.impressions,0);
+  const activeCount = DATA.filter(r=>r.delivery_status==='active').length;
+  const uniqueDays = new Set(DATA.map(r=>r.created_date).filter(Boolean)).size || 1;
+  const avgDailyGroups = DATA.length / uniqueDays;
+
+  const kpis = [
+    { label:'整體 CPA（每次購買成本）', value: overallCpa!=null?fmtMoney(overallCpa):'—', cls:'mint', lead:true },
+    { label:'平均每日留存組數', value: avgDailyGroups.toFixed(1) + ' 組/天', cls:'amber', lead:true },
+    { label:'總花費 (TWD)', value: fmtInt(totalSpend), cls:'' },
+    { label:'總購買次數', value: fmtInt(totalPurchases), cls:'' },
+    { label:'總曝光次數', value: fmtInt(totalImpressions), cls:'' },
+    { label:'進行中組合數', value: activeCount + ' / ' + DATA.length, cls:'' },
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.lead?'lead':''}">
+      <div class="label">${k.label}</div>
+      <div class="value ${k.cls}">${k.value}</div>
+    </div>`).join('');
+}
+
+function aggregateByCampaign(){
+  const map = new Map();
+  DATA.forEach(r=>{
+    if (!map.has(r.campaign)) map.set(r.campaign, { campaign:r.campaign, spend:0, reach:0, impressions:0, link_clicks:0, purchases:0, purchase_value:0, count:0, ctrSum:0 });
+    const a = map.get(r.campaign);
+    a.spend += r.spend;
+    a.reach += r.reach;
+    a.impressions += r.impressions;
+    a.link_clicks += r.link_clicks||0;
+    a.purchases += r.purchases||0;
+    a.purchase_value += r.purchase_value||0;
+    a.count += 1;
+    a.ctrSum += r.ctr||0;
+  });
+  return [...map.values()].map(a=>({
+    ...a,
+    roas: a.spend>0 && a.purchase_value>0 ? a.purchase_value/a.spend : null,
+    ctr: a.count>0 ? a.ctrSum/a.count : 0,
+    cpa: a.purchases>0 ? a.spend/a.purchases : null,
+  }));
+}
+
+function renderCampaignGrid(){
+  const sortBy = document.getElementById('camp-sort').value;
+  let agg = aggregateByCampaign();
+  if (sortBy === 'cpa_asc') {
+    agg.sort((a,b)=>{
+      if (a.cpa == null) return 1;
+      if (b.cpa == null) return -1;
+      return a.cpa - b.cpa;
+    });
+  } else {
+    agg.sort((a,b)=> (b[sortBy]||0) - (a[sortBy]||0));
+  }
+  const grid = document.getElementById('campaignGrid');
+  grid.innerHTML = agg.map(a=>{
+    const sel = campSelected.has(a.campaign) ? 'selected' : '';
+    return `<div class="campaign-card ${sel}" data-campaign="${escapeHtml(a.campaign)}">
+      <div class="cname">${escapeHtml(a.campaign)}</div>
+      <div class="csub">${a.count} 個廣告組合</div>
+      <div class="crow"><span class="clabel">CPA</span><span class="cval ${a.cpa!=null?'mint':''}">${a.cpa!=null?fmtMoney(a.cpa):'—'}</span></div>
+      <div class="crow"><span class="clabel">購買次數</span><span class="cval">${fmtInt(a.purchases)}</span></div>
+      <div class="crow"><span class="clabel">花費</span><span class="cval">${fmtInt(a.spend)}</span></div>
+      <div class="crow"><span class="clabel">ROAS</span><span class="cval">${a.roas!=null?fmtX(a.roas):'—'}</span></div>
+      <div class="crow"><span class="clabel">CTR</span><span class="cval">${fmtPct(a.ctr)}</span></div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.campaign-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const c = card.dataset.campaign;
+      if (campSelected.has(c)) campSelected.delete(c); else campSelected.add(c);
+      renderCampaignGrid();
+      renderCampCompare();
+    });
+  });
+  document.getElementById('campSelCount').textContent = campSelected.size;
+}
+
+function renderCampCompare(){
+  const panel = document.getElementById('campCompareContent');
+  if (campSelected.size < 1) {
+    panel.className = 'compare-empty';
+    panel.innerHTML = '點選上方卡片以比較成效';
+    return;
+  }
+  panel.className = '';
+  const agg = aggregateByCampaign().filter(a=>campSelected.has(a.campaign));
+  const metrics = [
+    {k:'cpa', l:'CPA 每次購買成本', f:fmtMoney, lowerBetter:true},
+    {k:'purchases', l:'購買次數', f:fmtInt},
+    {k:'spend', l:'總花費 (TWD)', f:fmtInt},
+    {k:'count', l:'廣告組合數', f:fmtInt},
+    {k:'reach', l:'觸及人數', f:fmtInt},
+    {k:'impressions', l:'曝光次數', f:fmtInt},
+    {k:'ctr', l:'平均 CTR', f:fmtPct},
+    {k:'link_clicks', l:'連結點擊', f:fmtInt},
+    {k:'roas', l:'ROAS', f:fmtX},
+  ];
+  let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">';
+  html += '<thead><tr><th style="text-align:left;padding:8px 12px;color:var(--text-faint);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border);">指標</th>';
+  agg.forEach(a=>{
+    html += `<th style="text-align:right;padding:8px 12px;color:var(--text-dim);font-size:12px;border-bottom:1px solid var(--border);font-weight:500;">${escapeHtml(a.campaign)}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+  metrics.forEach(m=>{
+    const vals = agg.map(a=>a[m.k]);
+    const validVals = vals.filter(v=>v!=null);
+    if (!validVals.length) return;
+    const best = m.lowerBetter ? Math.min(...validVals) : Math.max(...validVals);
+    html += `<tr><td style="padding:7px 12px;color:var(--text-dim);border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;">${m.l}</td>`;
+    agg.forEach(a=>{
+      const v = a[m.k];
+      const isBest = v != null && v === best && validVals.length > 1 && m.k !== 'count';
+      html += `<td style="text-align:right;padding:7px 12px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;color:${isBest?'var(--mint)':'var(--text)'};">${v==null?'—':m.f(v)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  panel.innerHTML = html;
+}
+
+function aggregateByDate(){
+  const map = new Map();
+  DATA.forEach(r=>{
+    const d = r.created_date || '未知日期';
+    if (!map.has(d)) map.set(d, { date:d, spend:0, purchases:0, purchase_value:0, impressions:0, ctrSum:0, count:0 });
+    const a = map.get(d);
+    a.spend += r.spend;
+    a.purchases += r.purchases||0;
+    a.purchase_value += r.purchase_value||0;
+    a.impressions += r.impressions;
+    a.ctrSum += r.ctr||0;
+    a.count += 1;
+  });
+  return [...map.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(a=>({
+    ...a,
+    roas: a.spend>0 && a.purchase_value>0 ? a.purchase_value/a.spend : 0,
+    ctr: a.count>0 ? a.ctrSum/a.count : 0,
+    cpa: a.purchases>0 ? a.spend/a.purchases : null,
+    groups: a.count,
+  }));
+}
+
+function renderRetentionChart(){
+  const agg = aggregateByDate();
+  const labels = agg.map(a=>String(a.date).slice(5));
+  const groupData = agg.map(a=>a.groups);
+  const cpaData = agg.map(a=>a.cpa);
+  if (retentionChart) retentionChart.destroy();
+  retentionChart = new Chart(document.getElementById('retentionChart'), {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: '每日留存組數',
+          data: groupData,
+          backgroundColor: 'rgba(240,199,107,0.55)',
+          borderColor: '#F0C76B',
+          borderWidth: 1,
+          yAxisID: 'y',
+          order: 2,
+        },
+        {
+          type: 'line',
+          label: 'CPA (TWD)',
+          data: cpaData,
+          borderColor: '#FF8A5C',
+          backgroundColor: 'rgba(255,138,92,0.08)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#FF8A5C',
+          tension: 0.25,
+          yAxisID: 'y1',
+          spanGaps: true,
+          order: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.label === 'CPA (TWD)') return ' CPA: ' + (ctx.parsed.y != null ? '$'+Math.round(ctx.parsed.y).toLocaleString('en-US') : '無購買');
+              return ' 留存組數: ' + ctx.parsed.y;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#5A6573', font:{size:10} }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { position: 'left', ticks: { color: '#F0C76B', font:{size:10} }, grid: { color: 'rgba(255,255,255,0.04)' }, title:{display:true,text:'廣告組合數',color:'#8B97A3',font:{size:10}} },
+        y1: { position: 'right', ticks: { color: '#FF8A5C', font:{size:10} }, grid: { display:false }, title:{display:true,text:'CPA (TWD)',color:'#8B97A3',font:{size:10}} }
+      }
+    }
+  });
+
+  let legendWrap = document.getElementById('retentionLegend');
+  if (!legendWrap) {
+    legendWrap = document.createElement('div');
+    legendWrap.id = 'retentionLegend';
+    document.getElementById('retentionChart').parentElement.after(legendWrap);
+  }
+  legendWrap.style.display='flex'; legendWrap.style.gap='16px'; legendWrap.style.marginTop='12px'; legendWrap.style.fontSize='11.5px'; legendWrap.style.color='var(--text-dim)';
+  legendWrap.innerHTML = `
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:#F0C76B;display:inline-block;"></span>每日留存組數（左軸）</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:#FF8A5C;display:inline-block;"></span>CPA（右軸）</span>
+  `;
+}
+
+function renderTrendButtons(){
+  const wrap = document.getElementById('trendMetricBtns');
+  wrap.innerHTML = TREND_METRICS.map(m=>`<button class="metric-btn ${m.k===currentTrendMetric?'active':''}" data-m="${m.k}">${m.l}</button>`).join('');
+  wrap.querySelectorAll('.metric-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      currentTrendMetric = btn.dataset.m;
+      renderTrendButtons();
+      renderTrendChart();
+    });
+  });
+}
+
+function renderTrendChart(){
+  const agg = aggregateByDate();
+  const labels = agg.map(a=>String(a.date).slice(5));
+  const metric = TREND_METRICS.find(m=>m.k===currentTrendMetric);
+  const data = agg.map(a=>a[currentTrendMetric]);
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: metric.l,
+        data,
+        borderColor: '#6FE3C4',
+        backgroundColor: 'rgba(111,227,196,0.08)',
+        fill: true,
+        tension: 0.25,
+        pointRadius: 2,
+        pointBackgroundColor: '#6FE3C4',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#5A6573', font:{size:10} }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#5A6573', font:{size:10} }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function renderCampaignPie(){
+  const agg = aggregateByCampaign().sort((a,b)=>b.spend-a.spend);
+  const top = agg.slice(0, 9);
+  const otherSum = agg.slice(9).reduce((s,a)=>s+a.spend,0);
+  const labels = top.map(a=>a.campaign).concat(otherSum>0?['其他']:[]);
+  const data = top.map(a=>a.spend).concat(otherSum>0?[otherSum]:[]);
+  const colors = ['#6FE3C4','#FF8A5C','#F0C76B','#7F77DD','#378ADD','#D4537E','#639922','#888780','#5A6573','#AFA9EC'];
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('campaignPie'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#11151A', borderWidth: 2 }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+  const total = data.reduce((s,v)=>s+v,0);
+  let legendWrap = document.getElementById('pieLegend');
+  if (legendWrap) legendWrap.remove();
+  legendWrap = document.createElement('div');
+  legendWrap.id = 'pieLegend';
+  legendWrap.style.display='flex'; legendWrap.style.flexWrap='wrap'; legendWrap.style.gap='10px'; legendWrap.style.marginTop='14px'; legendWrap.style.fontSize='11.5px'; legendWrap.style.color='var(--text-dim)';
+  legendWrap.innerHTML = labels.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:${colors[i]};display:inline-block;"></span>${escapeHtml(l)} ${((data[i]/total)*100).toFixed(1)}%</span>`).join('');
+  document.getElementById('campaignPie').parentElement.after(legendWrap);
+}
+
+let tabsBound = false;
+function setupTabs(){
+  if (tabsBound) return;
+  tabsBound = true;
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('view-'+tab.dataset.view).classList.add('active');
+      if (tab.dataset.view === 'trend') {
+        renderRetentionChart();
+        renderTrendButtons();
+        renderTrendChart();
+        renderCampaignPie();
+      }
+    });
+  });
+}
+
+function resetDashboardState(){
+  DATA = []; filtered = [];
+  sortKey = 'cpa'; sortDir = 1;
+  selected = new Set(); campSelected = new Set();
+  if (retentionChart) { retentionChart.destroy(); retentionChart = null; }
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+  if (pieChart) { pieChart.destroy(); pieChart = null; }
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active', i===0));
+  document.querySelectorAll('.view').forEach((v,i)=>v.classList.toggle('active', i===0));
+}
+
+let filtersBound = false;
+function setupFilterListeners(){
+  if (filtersBound) return;
+  filtersBound = true;
+  ['f-campaign','f-status','f-haspurchase'].forEach(id=>document.getElementById(id).addEventListener('change', applyFilters));
+  document.getElementById('f-search').addEventListener('input', applyFilters);
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    document.getElementById('f-campaign').value = '';
+    document.getElementById('f-status').value = '';
+    document.getElementById('f-search').value = '';
+    document.getElementById('f-haspurchase').value = '';
+    applyFilters();
+  });
+  document.getElementById('camp-sort').addEventListener('change', renderCampaignGrid);
+}
+
+function initDashboard(data, fileName){
+  DATA = data;
+  selected = new Set();
+  campSelected = new Set();
+  sortKey = 'cpa'; sortDir = 1;
+
+  // period label from created_date range
+  const dates = DATA.map(d=>d.created_date).filter(Boolean).sort();
+  const periodVal = dates.length ? `${dates[0]} → ${dates[dates.length-1]}` : '未知';
+  document.getElementById('periodVal').textContent = periodVal;
+  document.getElementById('headerSub').textContent = `來源檔案：${fileName} · 共 ${DATA.length} 個有花費的廣告組合`;
+
+  populateFilters();
+  renderKPIs();
+  renderTableHead();
+  applyFilters();
+  renderCompare();
+  setupTabs();
+  setupFilterListeners();
+  renderCampaignGrid();
+  renderCampCompare();
+}
+
+// =========================================================================
+// INIT
+// =========================================================================
+setupUploadScreen();
+
+</script>
+</body>
+</html>
